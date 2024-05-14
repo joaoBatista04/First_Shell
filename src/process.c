@@ -21,6 +21,7 @@ Process *process_allocate()
     Process *process = (Process *)malloc(sizeof(Process));
 
     process->flags = (char **)malloc(sizeof(char *));
+    process->command = (char *)malloc(sizeof(char));
     process->flags_amount = 0;
 
     return process;
@@ -33,7 +34,7 @@ Process *process_allocate()
  */
 Process **process_vector_allocate()
 {
-    Process **processes = (Process **)malloc(MAX_PROCESS_AMOUNT * sizeof(Process));
+    Process **processes = (Process **)malloc(MAX_PROCESS_AMOUNT * sizeof(Process *));
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
     {
@@ -52,6 +53,7 @@ void process_free(Process *process)
 {
     if (process != NULL)
     {
+
         if (process->flags != NULL)
         {
             for (int i = 0; i < process->flags_amount; i++)
@@ -62,11 +64,7 @@ void process_free(Process *process)
             free(process->flags);
         }
 
-        if (process->command != NULL)
-        {
-            free(process->command);
-        }
-
+        free(process->command);
         free(process);
     }
 }
@@ -79,6 +77,7 @@ void process_free(Process *process)
  */
 void process_set_command(Process *process, char *command)
 {
+    free(process->command);
     process->command = command;
 }
 

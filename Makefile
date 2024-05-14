@@ -52,3 +52,6 @@ clean:
 
 run:
 	@ ./fsh
+
+val:
+	@ valgrind --leak-check=full --track-origins=yes ./fsh
