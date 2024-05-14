@@ -47,7 +47,7 @@ $(EXECUTABLE):
 clean:
 # @ echo $(RED)
 # @ echo "Cleaning workspace..."
-	@ rm -rf $(OBJ) $(EXECUTABLE) *.txt
+	@ rm -rf $(OBJ) $(EXECUTABLE)
 # @ echo $(RESET_COLOR)
 
 run:
