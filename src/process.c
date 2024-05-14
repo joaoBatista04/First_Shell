@@ -50,12 +50,25 @@ Process **process_vector_allocate()
  */
 void process_free(Process *process)
 {
-    if (process->flags)
+    if (process != NULL)
     {
-        free(process->flags);
-    }
+        if (process->flags != NULL)
+        {
+            for (int i = 0; i < process->flags_amount; i++)
+            {
+                free(process->flags[i]);
+            }
 
-    free(process);
+            free(process->flags);
+        }
+
+        if (process->command != NULL)
+        {
+            free(process->command);
+        }
+
+        free(process);
+    }
 }
 
 /**
@@ -104,5 +117,23 @@ void process_print_vector(Process **processes)
         }
 
         printf("\n");
+    }
+}
+
+char *process_get_name(Process *process)
+{
+    return process->command;
+}
+
+void process_vector_free(Process **processes)
+{
+    if (processes != NULL)
+    {
+        for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+        {
+            process_free(processes[i]);
+        }
+
+        free(processes);
     }
 }
