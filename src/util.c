@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "../include/util.h"
 #include "../include/process.h"
 
@@ -74,11 +76,124 @@ Process **shell_read_commands(int *commands_amount)
     }
 
     // The number of process is recorded
-    *commands_amount = i;
+    *commands_amount = i + 1;
 
     return process_vector;
 }
 
-void shell_run_processes(Process **commands, int commands_amount)
+void shell_run_processes(Process **processes, int commands_amount)
 {
+    char base[2000] = "/bin/";
+    char path[2000];
+
+    if (commands_amount > 0)
+    {
+        sprintf(path, "%s%s", base, process_get_name(processes[0]));
+
+        __pid_t pid1 = fork();
+
+        if (pid1 == 0)
+        {
+            execv(path, process_get_flags(processes[0]));
+            exit(1);
+        }
+
+        int status;
+        waitpid(pid1, &status, 0);
+    }
+
+    if (commands_amount > 1)
+    {
+        sprintf(path, "%s%s", base, process_get_name(processes[1]));
+
+        __pid_t pid2 = fork();
+
+        if (pid2 == 0)
+        {
+            execv(path, process_get_flags(processes[1]));
+            exit(1);
+        }
+
+        int status;
+        waitpid(pid2, &status, 0);
+
+        /*__pid_t pid2 = fork();
+
+        if (pid2 == 0)
+        {
+            execv(path, process_get_flags(processes[1]));
+        }*/
+    }
+
+    if (commands_amount > 2)
+    {
+        sprintf(path, "%s%s", base, process_get_name(processes[2]));
+
+        /*__pid_t pid3 = fork();
+
+        if (pid3 == 0)
+        {
+            execv(path, process_get_flags(processes[2]));
+        }*/
+    }
+
+    if (commands_amount > 3)
+    {
+        sprintf(path, "%s%s", base, process_get_name(processes[3]));
+
+        /*__pid_t pid4 = fork();
+
+        if (pid4 == 0)
+        {
+            execv(path, process_get_flags(processes[3]));
+        }*/
+    }
+
+    if (commands_amount > 4)
+    {
+        sprintf(path, "%s%s", base, process_get_name(processes[4]));
+
+        /*__pid_t pid5 = fork();
+
+        if (pid5 == 0)
+        {
+            execv(path, process_get_flags(processes[4]));
+        }*/
+    }
+}
+
+void shell_execute_process(Process *process)
+{
+    pid_t pid = fork();
+
+    if (pid == -1)
+    {
+        perror("Error on fork!\n");
+        exit(-1);
+    }
+
+    if (pid == 0)
+    {
+        execvp(process_get_name(process), process_get_flags(process));
+        perror("Exec error!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    else
+    {
+        int status;
+        waitpid(pid, &status, 0);
+
+        if (WIFSIGNALED(status))
+        {
+            int signal = WTERMSIG(status);
+
+            if (signal == SIGUSR1)
+            {
+                kill(getppid(), SIGUSR1);
+            }
+        }
+
+        exit(EXIT_SUCCESS);
+    }
 }

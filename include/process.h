@@ -10,6 +10,7 @@ void process_set_command(Process *process, char *command);
 void process_set_flag(Process *process, char *flag);
 
 char *process_get_name(Process *process);
+char **process_get_flags(Process *process);
 
 void process_print_vector(Process **processes);
 

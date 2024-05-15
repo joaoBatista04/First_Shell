@@ -9,9 +9,11 @@ int main(int argc, char *argv[])
     int commands_amount;
     Process **processes;
     char first = 'y';
+    int ends = 0;
 
     while (1)
     {
+        // printf("PID: %d\n", getpid());
         shell_print_name(first);
         first = 'n';
 

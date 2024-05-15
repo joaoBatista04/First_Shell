@@ -124,6 +124,11 @@ char *process_get_name(Process *process)
     return process->command;
 }
 
+char **process_get_flags(Process *process)
+{
+    return process->flags;
+}
+
 void process_vector_free(Process **processes)
 {
     if (processes != NULL)
