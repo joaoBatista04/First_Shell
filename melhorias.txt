@@ -1,4 +1,9 @@
-nao alocar 5 processos de uma vez, ir realocando conforme necessidade
-nao abortat shell se houverem mais de 5 comandos
+nao abortar shell se houverem mais de 5 comandos
 Tirar alocação de memoria de comandos e usar variáveis globais
-clean -s -a -aux jorge -amado ps
+
+_____________________________________________________________________________
+
+- faltando fork nos processos em background?
+- resolver comandos que possuem espaço (ps aux...)
+- passagem do token por strdup melhorou os erros, mas falta 1 free misterioso
+- variáveis globais??

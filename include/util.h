@@ -10,4 +10,6 @@ int execute_processes(char ***commands, int commands_amount, int exit);
 static void execute_process_foreground(char **foreground_process);
 static void execute_process_background(char **background_process);
 
+void signal_handler();
+
 #endif

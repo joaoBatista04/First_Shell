@@ -16,6 +16,9 @@
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
 
+
+// char* commands_test[MAX_PROCESS_AMOUNT][MAX_PARAMS_AMOUNT];
+
 /**
  * @brief Always executed to print the shell info
  *
@@ -40,7 +43,7 @@ char ***shell_read_commands(char first, int *commands_amount)
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
     {
-        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
+        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *)); //pq + 1?
     }
 
     if (first == 'y')
@@ -56,11 +59,13 @@ char ***shell_read_commands(char first, int *commands_amount)
     int current_param_index = 1;
     char *token = strtok(line, " ");
 
+
     while (token != NULL)
     {
         if (token[0] != '-' && token[0] != '#' && current_command_index < MAX_PROCESS_AMOUNT)
         {
-            commands[current_command_index][0] = token;
+            commands[current_command_index][0] = strdup(token);
+            // commands[current_command_index][0] = token;
             *commands_amount = *commands_amount + 1;
         }
 
@@ -70,7 +75,9 @@ char ***shell_read_commands(char first, int *commands_amount)
             {
                 printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, token, commands[current_command_index][0]);
             }
-            commands[current_command_index][current_param_index] = token;
+            commands[current_command_index][current_param_index] = strdup(token);
+            // commands[current_command_index][current_param_index] = token;
+
             current_param_index++;
         }
 
@@ -86,10 +93,9 @@ char ***shell_read_commands(char first, int *commands_amount)
             }
             current_param_index = 1;
         }
-
         token = strtok(NULL, " ");
     }
-
+    
     printf("COMMANDS AMOUNT: %d\n", *commands_amount);
 
     return commands;
@@ -110,6 +116,7 @@ int execute_processes(char ***commands, int commands_amount, int exit)
     {
         if (commands[i][0] != NULL)
         {
+            printf("exit: %s\n", commands[i][0]);
             if (!strcmp(commands[i][0], "exit"))
             {
                 exit = 0;
@@ -140,13 +147,26 @@ static void execute_process_background(char **background_process)
 
     if (pid == 0)
     {
+
+        //fork()
+        //if (pid == 0) {
+        
+        // }
+
         int devNull = open("/dev/null", O_WRONLY);
         int devNull2 = open("/dev/null", O_WRONLY);
         dup2(devNull, STDOUT_FILENO);
         dup2(devNull2, STDIN_FILENO);
         setpgid(0, pid);
         execv(path, background_process);
+
+        
+        //signal_handler()
+        //verifica while WNOHANG
+        //se outro pai terminal mal = todos morrem com o mesmo sinal
+        //se um neto morre, não mata todos os processos
     }
+
 }
 
 static void execute_process_foreground(char **foreground_process)
@@ -163,4 +183,8 @@ static void execute_process_foreground(char **foreground_process)
 
     int status;
     waitpid(pid, &status, 0);
+}
+
+void signal_handler() {
+
 }
