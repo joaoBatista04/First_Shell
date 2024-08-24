@@ -1,37 +1,28 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "../include/process.h"
 #include "../include/util.h"
 
 int main(int argc, char *argv[])
 {
-    int commands_amount;
-    Process **processes;
     char first = 'y';
-    int ends = 0;
+    int commands_amount = 0, exit = 1;
+    char ***commands;
 
-    while (1)
+    while (exit)
     {
-        // printf("PID: %d\n", getpid());
+        commands_amount = 0;
+
         shell_print_name(first);
+
+        commands = shell_read_commands(first, &commands_amount);
+
+        exit = execute_processes(commands, commands_amount, exit);
+
+        free_commands(commands);
+        
         first = 'n';
-
-        processes = shell_read_commands(&commands_amount);
-
-        // process_print_vector(processes);
-
-        if (!strcmp(process_get_name(processes[0]), "quit"))
-        {
-            break;
-        }
-
-        shell_run_processes(processes, commands_amount);
-
-        process_vector_free(processes);
     }
-
-    process_vector_free(processes);
 
     return 0;
 }

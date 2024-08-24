@@ -3,9 +3,18 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include "../include/util.h"
-#include "../include/process.h"
+
+#define GREEN "\033[1;32m"
+#define PURPLE "\033[35m"
+#define RESET "\033[0m"
+#define RED "\033[0;31m"
+
+#define MAX_PROCESS_AMOUNT 5
+#define MAX_PARAMS_AMOUNT 2
 
 /**
  * @brief Always executed to print the shell info
@@ -21,179 +30,137 @@ void shell_print_name(char first)
     }
 
     // Print buffer info
-    printf("\e[1;92mfsh\e[1;94m> \e[0m");
+    printf(GREEN "fsh" PURPLE "> " RESET);
 }
 
-/**
- * @brief Reading of the buffer and tokenization of the commands and flags
- *
- * @param commands_amount
- * @return Process**
- */
-Process **shell_read_commands(int *commands_amount)
+char ***shell_read_commands(char first, int *commands_amount)
 {
-    Process **process_vector = process_vector_allocate();
-    char line_info[2000];
-    char *token;
-    int i = 0;
+    char line[2000];
+    char ***commands = (char ***)malloc(MAX_PROCESS_AMOUNT * sizeof(char **));
 
-    // Buffer reading
-    scanf("%[^\n]%*c", line_info);
+    for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+    {
+        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
+    }
 
-    // Reading of the first command
-    token = strtok(line_info, " ");
+    if (first == 'y')
+    {
+        scanf("%[^\n]", line);
+    }
+    else
+    {
+        scanf("%*c%[^\n]", line);
+    }
+
+    int current_command_index = 0;
+    int current_param_index = 1;
+    char *token = strtok(line, " ");
+
     while (token != NULL)
     {
-        // If the token doesn't start with '-', then it is a command
-        if (token[0] != '-')
+        if (token[0] != '-' && token[0] != '#' && current_command_index < MAX_PROCESS_AMOUNT)
         {
-            process_set_command(process_vector[i], strdup(token));
+            commands[current_command_index][0] = token;
+            *commands_amount = *commands_amount + 1;
         }
 
-        // If the token starts with '-', then it is a flag
-        else
+        if (token[0] == '-')
         {
-            process_set_flag(process_vector[i], strdup(token));
-        }
-
-        // Reading of the next token
-        token = strtok(NULL, " ");
-
-        // If the next token doesn't start with '-', then it will be a new command
-        if (token)
-        {
-            if (token[0] != '-')
+            if (current_param_index > MAX_PARAMS_AMOUNT)
             {
-                i++;
+                printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, token, commands[current_command_index][0]);
+            }
+            commands[current_command_index][current_param_index] = token;
+            current_param_index++;
+        }
+
+        if (token[0] == '#')
+        {
+            current_command_index++;
+
+            if (current_command_index >= MAX_PROCESS_AMOUNT)
+            {
+                printf(RED "Error: You can't type more than five commands at once!\n" RESET);
+                perror(RED "Aborting: more than five commands called!\n" RESET);
+                abort();
+            }
+            current_param_index = 1;
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    printf("COMMANDS AMOUNT: %d\n", *commands_amount);
+
+    return commands;
+}
+
+void free_commands(char ***commands)
+{
+    for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+    {
+        free(commands[i]);
+    }
+    free(commands);
+}
+
+int execute_processes(char ***commands, int commands_amount, int exit)
+{
+    for (int i = 0; i < commands_amount; i++)
+    {
+        if (commands[i][0] != NULL)
+        {
+            if (!strcmp(commands[i][0], "exit"))
+            {
+                exit = 0;
+                break;
+            }
+
+            if (i == 0)
+            {
+                execute_process_foreground(commands[i]);
+            }
+
+            else
+            {
+                execute_process_background(commands[i]);
             }
         }
-
-        // If the number of processes exceeds the maximum number of processes allowed, then the process registration ends
-        if (i >= 5)
-        {
-            break;
-        }
     }
 
-    // The number of process is recorded
-    *commands_amount = i + 1;
-
-    return process_vector;
+    return exit;
 }
 
-void shell_run_processes(Process **processes, int commands_amount)
+static void execute_process_background(char **background_process)
 {
-    char base[2000] = "/bin/";
     char path[2000];
 
-    if (commands_amount > 0)
-    {
-        sprintf(path, "%s%s", base, process_get_name(processes[0]));
-
-        __pid_t pid1 = fork();
-
-        if (pid1 == 0)
-        {
-            execv(path, process_get_flags(processes[0]));
-            exit(1);
-        }
-
-        int status;
-        waitpid(pid1, &status, 0);
-    }
-
-    if (commands_amount > 1)
-    {
-        sprintf(path, "%s%s", base, process_get_name(processes[1]));
-
-        __pid_t pid2 = fork();
-
-        if (pid2 == 0)
-        {
-            execv(path, process_get_flags(processes[1]));
-            exit(1);
-        }
-
-        int status;
-        waitpid(pid2, &status, 0);
-
-        /*__pid_t pid2 = fork();
-
-        if (pid2 == 0)
-        {
-            execv(path, process_get_flags(processes[1]));
-        }*/
-    }
-
-    if (commands_amount > 2)
-    {
-        sprintf(path, "%s%s", base, process_get_name(processes[2]));
-
-        /*__pid_t pid3 = fork();
-
-        if (pid3 == 0)
-        {
-            execv(path, process_get_flags(processes[2]));
-        }*/
-    }
-
-    if (commands_amount > 3)
-    {
-        sprintf(path, "%s%s", base, process_get_name(processes[3]));
-
-        /*__pid_t pid4 = fork();
-
-        if (pid4 == 0)
-        {
-            execv(path, process_get_flags(processes[3]));
-        }*/
-    }
-
-    if (commands_amount > 4)
-    {
-        sprintf(path, "%s%s", base, process_get_name(processes[4]));
-
-        /*__pid_t pid5 = fork();
-
-        if (pid5 == 0)
-        {
-            execv(path, process_get_flags(processes[4]));
-        }*/
-    }
-}
-
-void shell_execute_process(Process *process)
-{
-    pid_t pid = fork();
-
-    if (pid == -1)
-    {
-        perror("Error on fork!\n");
-        exit(-1);
-    }
+    sprintf(path, "/bin/%s", background_process[0]);
+    __pid_t pid = fork();
 
     if (pid == 0)
     {
-        execvp(process_get_name(process), process_get_flags(process));
-        perror("Exec error!\n");
-        exit(EXIT_FAILURE);
+        int devNull = open("/dev/null", O_WRONLY);
+        int devNull2 = open("/dev/null", O_WRONLY);
+        dup2(devNull, STDOUT_FILENO);
+        dup2(devNull2, STDIN_FILENO);
+        setpgid(0, pid);
+        execv(path, background_process);
     }
+}
 
-    else
+static void execute_process_foreground(char **foreground_process)
+{
+    char path[2000];
+
+    sprintf(path, "/bin/%s", foreground_process[0]);
+    __pid_t pid = fork();
+
+    if (pid == 0)
     {
-        int status;
-        waitpid(pid, &status, 0);
-
-        if (WIFSIGNALED(status))
-        {
-            int signal = WTERMSIG(status);
-
-            if (signal == SIGUSR1)
-            {
-                kill(getppid(), SIGUSR1);
-            }
-        }
-
-        exit(EXIT_SUCCESS);
+        execv(path, foreground_process);
     }
+
+    int status;
+    waitpid(pid, &status, 0);
 }
