@@ -16,7 +16,6 @@
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
 
-
 // char* commands_test[MAX_PROCESS_AMOUNT][MAX_PARAMS_AMOUNT];
 
 /**
@@ -43,7 +42,7 @@ char ***shell_read_commands(char first, int *commands_amount)
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
     {
-        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *)); //pq + 1?
+        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *)); // pq + 1?
     }
 
     if (first == 'y')
@@ -58,7 +57,6 @@ char ***shell_read_commands(char first, int *commands_amount)
     int current_command_index = 0;
     int current_param_index = 1;
     char *token = strtok(line, " ");
-
 
     while (token != NULL)
     {
@@ -95,8 +93,6 @@ char ***shell_read_commands(char first, int *commands_amount)
         }
         token = strtok(NULL, " ");
     }
-    
-    printf("COMMANDS AMOUNT: %d\n", *commands_amount);
 
     return commands;
 }
@@ -110,63 +106,100 @@ void free_commands(char ***commands)
     free(commands);
 }
 
-int execute_processes(char ***commands, int commands_amount, int exit)
+int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit)
 {
-    for (int i = 0; i < commands_amount; i++)
+    if (!strcmp("exit", commands[0][0]))
     {
-        if (commands[i][0] != NULL)
+        for (int i = 0; i < *background_processes_amount; i++)
         {
-            printf("exit: %s\n", commands[i][0]);
-            if (!strcmp(commands[i][0], "exit"))
-            {
-                exit = 0;
-                break;
-            }
+            killpg(background_processes[i], SIGKILL);
+        }
 
-            if (i == 0)
-            {
-                execute_process_foreground(commands[i]);
-            }
+        exit = 0;
+    }
 
-            else
-            {
-                execute_process_background(commands[i]);
-            }
+    else
+    {
+        if (commands_amount == 1)
+        {
+            execute_process_foreground(commands[0]);
+        }
+
+        else
+        {
+            execute_process_foreground(commands[0]);
+            execute_process_background(commands, commands_amount, background_processes, background_processes_amount);
         }
     }
 
     return exit;
 }
 
-static void execute_process_background(char **background_process)
+static void execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount)
 {
-    char path[2000];
+    pid_t session_leader = fork();
 
-    sprintf(path, "/bin/%s", background_process[0]);
-    __pid_t pid = fork();
-
-    if (pid == 0)
+    if (session_leader < 0)
     {
-
-        //fork()
-        //if (pid == 0) {
-        
-        // }
-
-        int devNull = open("/dev/null", O_WRONLY);
-        int devNull2 = open("/dev/null", O_WRONLY);
-        dup2(devNull, STDOUT_FILENO);
-        dup2(devNull2, STDIN_FILENO);
-        setpgid(0, pid);
-        execv(path, background_process);
-
-        
-        //signal_handler()
-        //verifica while WNOHANG
-        //se outro pai terminal mal = todos morrem com o mesmo sinal
-        //se um neto morre, não mata todos os processos
+        printf(RED "Error: creation of processes in background!\n" RESET);
+        exit(1);
     }
 
+    else if (session_leader == 0)
+    {
+        setpgid(0, getpid());
+
+        if (commands_amount == 2)
+        {
+            exec_process_aux(background_process[1]);
+        }
+
+        else if (commands_amount == 3)
+        {
+            exec_process_aux(background_process[1]);
+            exec_process_aux(background_process[2]);
+        }
+
+        pid_t pid;
+        int status;
+        while (pid)
+        {
+            pid = waitpid(-1, &status, 0);
+        }
+    }
+
+    else
+    {
+        background_process_ids[*background_processes_amount] = session_leader;
+        (*background_processes_amount)++;
+    }
+}
+
+static void exec_process_aux(char **background_process)
+{
+    pid_t child = fork();
+
+    if (child < 0)
+    {
+        printf(RED "ERROR ON BACKGROUND PROCESS CREATION!\n" RESET);
+    }
+
+    else if (child == 0)
+    {
+        char path[2000];
+
+        sprintf(path, "/bin/%s", background_process[0]);
+
+        int devnull = open("/dev/null", O_RDWR);
+        dup2(devnull, STDIN_FILENO);
+        dup2(devnull, STDOUT_FILENO);
+
+        execv(path, background_process);
+    }
+
+    else
+    {
+    }
 }
 
 static void execute_process_foreground(char **foreground_process)
@@ -179,12 +212,15 @@ static void execute_process_foreground(char **foreground_process)
     if (pid == 0)
     {
         execv(path, foreground_process);
+
+        printf(RED "ERROR ON FOREGROUND EXECUTION!\n" RESET);
+        exit(1);
     }
 
     int status;
     waitpid(pid, &status, 0);
 }
 
-void signal_handler() {
-
+void signal_handler()
+{
 }
