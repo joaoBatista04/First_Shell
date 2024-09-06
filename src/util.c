@@ -190,6 +190,8 @@ static void exec_process_aux(char **background_process)
 
         sprintf(path, "/bin/%s", background_process[0]);
 
+        __pid_t consciouness = fork();
+
         int devnull = open("/dev/null", O_RDWR);
         dup2(devnull, STDIN_FILENO);
         dup2(devnull, STDOUT_FILENO);
