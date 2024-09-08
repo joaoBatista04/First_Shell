@@ -160,11 +160,32 @@ static void execute_process_background(char ***background_process, int commands_
             exec_process_aux(background_process[2]);
         }
 
+        else if (commands_amount == 4)
+        {
+            exec_process_aux(background_process[1]);
+            exec_process_aux(background_process[2]);
+            exec_process_aux(background_process[3]);
+        }
+
+        else if (commands_amount == 5)
+        {
+            exec_process_aux(background_process[1]);
+            exec_process_aux(background_process[2]);
+            exec_process_aux(background_process[3]);
+            exec_process_aux(background_process[4]);
+        }
+
         pid_t pid;
         int status;
         while (pid)
         {
-            pid = waitpid(-1, &status, 0);
+            pid = waitpid(0, &status, 0);
+
+            if (WIFSIGNALED(status))
+            {
+                // printf("FILHO MORREU COM SINAL %d\n", WTERMSIG(status));
+                killpg(session_leader, WTERMSIG(status));
+            }
         }
     }
 
@@ -197,10 +218,6 @@ static void exec_process_aux(char **background_process)
         dup2(devnull, STDOUT_FILENO);
 
         execv(path, background_process);
-    }
-
-    else
-    {
     }
 }
 
