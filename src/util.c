@@ -54,44 +54,93 @@ char ***shell_read_commands(char first, int *commands_amount)
         scanf("%*c%[^\n]", line);
     }
 
-    int current_command_index = 0;
-    int current_param_index = 1;
-    char *token = strtok(line, " ");
+    // char *token = strtok(line, " ");
 
-    while (token != NULL)
-    {
-        if (token[0] != '-' && token[0] != '#' && current_command_index < MAX_PROCESS_AMOUNT)
+    // while (token != NULL)
+    // {
+    //     if (token[0] != '-' && token[0] != '#' && current_command_index < MAX_PROCESS_AMOUNT)
+    //     {
+    //         commands[current_command_index][0] = strdup(token);
+    //         // commands[current_command_index][0] = token;
+    //         *commands_amount = *commands_amount + 1;
+    //     }
+
+    //     if (token[0] == '-')
+    //     {
+    //         if (current_param_index > MAX_PARAMS_AMOUNT)
+    //         {
+    //             printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, token, commands[current_command_index][0]);
+    //         }
+    //         commands[current_command_index][current_param_index] = strdup(token);
+    //         // commands[current_command_index][current_param_index] = token;
+
+    //         current_param_index++;
+    //     }
+
+    //     if (token[0] == '#')
+    //     {
+    //         current_command_index++;
+
+    //         if (current_command_index >= MAX_PROCESS_AMOUNT)
+    //         {
+    //             printf(RED "Error: You can't type more than five commands at once!\n" RESET);
+    //             perror(RED "Aborting: more than five commands called!\n" RESET);
+    //             abort();
+    //         }
+    //         current_param_index = 1;
+    //     }
+    //     token = strtok(NULL, " ");
+    // }
+
+    char* commands_aux[MAX_PROCESS_AMOUNT];
+    char* command = strtok(line, "#");
+    int count_proc = 0;
+    while (command != NULL) {
+
+        if (count_proc >= MAX_PROCESS_AMOUNT)
         {
-            commands[current_command_index][0] = strdup(token);
-            // commands[current_command_index][0] = token;
-            *commands_amount = *commands_amount + 1;
+            printf(RED "Error: You can't type more than five commands at once!\n" RESET);
+            perror(RED "Aborting: more than five commands called!\n" RESET);
+            abort();
         }
 
-        if (token[0] == '-')
-        {
-            if (current_param_index > MAX_PARAMS_AMOUNT)
-            {
-                printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, token, commands[current_command_index][0]);
+        // Remove espaços extras no começo do comando
+        while (*command == ' ') command++;
+
+        printf("Comando: %s\n", command);
+        commands_aux[count_proc] = strdup(command);
+        
+        // Avançar para o próximo comando separado por '#'
+        command = strtok(NULL, "#");
+        count_proc++;
+    }
+
+
+    for (int i = 0; i < count_proc; i++) {
+        // Agora separa os parâmetros com '-'
+        char* dup = strdup(commands_aux[i]);
+        char* parameter = strtok(dup, "-");
+        
+        // O primeiro parametro é o próprio comando, armazenamos ele primeiro
+        if (parameter != NULL) {
+            printf("Comando principal: %s\n", parameter);
+            commands[i][0] = strdup(parameter);
+        }
+        
+        int count_param = 1;
+        // Pegamos os parâmetros com '-'
+        parameter = strtok(NULL, "-");
+        while (parameter != NULL) {
+            printf("Parâmetro: -%s\n", parameter);
+
+            if (count_param > MAX_PARAMS_AMOUNT) {
+                printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, parameter, commands[i][0]);
             }
-            commands[current_command_index][current_param_index] = strdup(token);
-            // commands[current_command_index][current_param_index] = token;
+            else commands[i][count_param] = strdup(parameter);
 
-            current_param_index++;
+            parameter = strtok(NULL, "-");
+            count_param++;
         }
-
-        if (token[0] == '#')
-        {
-            current_command_index++;
-
-            if (current_command_index >= MAX_PROCESS_AMOUNT)
-            {
-                printf(RED "Error: You can't type more than five commands at once!\n" RESET);
-                perror(RED "Aborting: more than five commands called!\n" RESET);
-                abort();
-            }
-            current_param_index = 1;
-        }
-        token = strtok(NULL, " ");
     }
 
     return commands;
