@@ -1,5 +1,6 @@
 nao abortar shell se houverem mais de 5 comandos
 Tirar alocação de memoria de comandos e usar variáveis globais
+Dar suporte para leitura de comandos sem -
 
 _____________________________________________________________________________
 

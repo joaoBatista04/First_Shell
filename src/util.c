@@ -108,7 +108,7 @@ void free_commands(char ***commands)
 
 int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit)
 {
-    if (!strcmp("exit", commands[0][0]))
+    if (!strcmp("die", commands[0][0]))
     {
         for (int i = 0; i < *background_processes_amount; i++)
         {
