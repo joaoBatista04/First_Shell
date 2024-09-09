@@ -13,6 +13,7 @@
 #define RESET "\033[0m"
 #define RED "\033[0;31m"
 
+#define MAX_PARAM_LENGTH 2000
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
 #define MAX_COMMANDS 3
@@ -43,19 +44,18 @@ char ***shell_read_commands(char first, int *commands_amount)
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
         commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
-    
+
     if (first == 'y')
         scanf("%[^\n]", line);
-    
+
     else
         scanf("%*c%[^\n]", line);
-    
 
-    char* commands_aux[MAX_PROCESS_AMOUNT];
-    char* command = strtok(line, "#");
+    char *commands_aux[MAX_PROCESS_AMOUNT];
+    char *command = strtok(line, "#");
     int count_proc = 0;
 
-    while (command != NULL) 
+    while (command != NULL)
     {
 
         if (count_proc >= MAX_PROCESS_AMOUNT)
@@ -66,49 +66,51 @@ char ***shell_read_commands(char first, int *commands_amount)
         }
 
         // Remove espaços extras no começo do comando
-        while (*command == ' ') command++;
+        while (*command == ' ')
+            command++;
 
-        //printf("Comando: %s\n", command);
+        // printf("Comando: %s\n", command);
         commands_aux[count_proc] = strdup(command);
-        
+
         // Avançar para o próximo comando separado por '#'
         command = strtok(NULL, "#");
         count_proc++;
     }
 
-    
-    for (int i = 0; i < count_proc; i++) 
+    for (int i = 0; i < count_proc; i++)
     {
         // Agora separamos os parâmetros com ' '
-        char* dup = strdup(commands_aux[i]);
-        char* parameter = strtok(dup, " ");
-        
+        char *dup = strdup(commands_aux[i]);
+        char *parameter = strtok(dup, " ");
+
         // O primeiro parametro é o comando principal, armazenamos ele na primeira posição
-        if (parameter != NULL) 
+        if (parameter != NULL)
         {
-            //printf("Comando principal: %s\n", parameter);
+            // printf("Comando principal: %s\n", parameter);
             commands[i][0] = strdup(parameter);
         }
-        
+
         int count_param = 1;
-        
+
         // Pegamos os parâmetros com ' '
         parameter = strtok(NULL, " ");
 
-        while (parameter != NULL) {
-            //printf("Parâmetro: %s\n", parameter);
+        while (parameter != NULL)
+        {
+            // printf("Parâmetro: %s\n", parameter);
 
             if (count_param > MAX_PARAMS_AMOUNT)
                 printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, parameter, commands[i][0]);
-            
-            else commands[i][count_param] = strdup(parameter);
+
+            else
+                commands[i][count_param] = strdup(parameter);
 
             parameter = strtok(NULL, " ");
             count_param++;
         }
     }
-    
 
+    *commands_amount = count_proc;
 
     return commands;
 }
