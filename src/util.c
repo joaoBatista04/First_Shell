@@ -13,12 +13,8 @@
 #define RESET "\033[0m"
 #define RED "\033[0;31m"
 
-#define MAX_PARAM_LENGTH 2000
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
-#define MAX_COMMANDS 3
-
-// char* commands_test[MAX_PROCESS_AMOUNT][MAX_PARAMS_AMOUNT];
 
 /**
  * @brief Always executed to print the shell info
@@ -86,7 +82,6 @@ char ***shell_read_commands(char first, int *commands_amount)
         // O primeiro parametro é o comando principal, armazenamos ele na primeira posição
         if (parameter != NULL)
         {
-            // printf("Comando principal: %s\n", parameter);
             commands[i][0] = strdup(parameter);
         }
 
@@ -97,8 +92,6 @@ char ***shell_read_commands(char first, int *commands_amount)
 
         while (parameter != NULL)
         {
-            // printf("Parâmetro: %s\n", parameter);
-
             if (count_param > MAX_PARAMS_AMOUNT)
                 printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, parameter, commands[i][0]);
 
