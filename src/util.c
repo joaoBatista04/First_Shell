@@ -131,22 +131,24 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
 
     else
     {
+        int is_foreground_active;
+
         if (commands_amount == 1)
         {
-            execute_process_foreground(commands[0]);
+            execute_process_foreground(commands[0], 0, &is_foreground_active);
         }
 
         else
         {
-            execute_process_foreground(commands[0]);
-            execute_process_background(commands, commands_amount, background_processes, background_processes_amount);
+            pid_t pid_group = execute_process_background(commands, commands_amount, background_processes, background_processes_amount, &is_foreground_active);
+            execute_process_foreground(commands[0], pid_group, &is_foreground_active);
         }
     }
 
     return exit;
 }
 
-static void execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount)
+pid_t execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount, int *is_foreground_active)
 {
     pid_t session_leader = fork();
 
@@ -188,16 +190,18 @@ static void execute_process_background(char ***background_process, int commands_
 
         pid_t pid;
         int status;
-        while (pid)
+        while (pid != -1)
         {
             pid = waitpid(0, &status, 0);
 
             if (WIFSIGNALED(status))
             {
-                // printf("FILHO MORREU COM SINAL %d\n", WTERMSIG(status));
+                printf("FILHO MORREU COM SINAL %d\n", WTERMSIG(status));
                 killpg(session_leader, WTERMSIG(status));
             }
         }
+
+        kill(getpid(), SIGTERM);
     }
 
     else
@@ -205,6 +209,8 @@ static void execute_process_background(char ***background_process, int commands_
         background_process_ids[*background_processes_amount] = session_leader;
         (*background_processes_amount)++;
     }
+
+    return session_leader;
 }
 
 static void exec_process_aux(char **background_process)
@@ -213,7 +219,7 @@ static void exec_process_aux(char **background_process)
 
     if (child < 0)
     {
-        printf(RED "ERROR ON BACKGROUND PROCESS CREATION!\n" RESET);
+        printf(RED "Error on background process creation!\n" RESET);
     }
 
     else if (child == 0)
@@ -225,14 +231,17 @@ static void exec_process_aux(char **background_process)
         __pid_t consciouness = fork();
 
         int devnull = open("/dev/null", O_RDWR);
+        int original_stdout = dup(STDOUT_FILENO);
         dup2(devnull, STDIN_FILENO);
         dup2(devnull, STDOUT_FILENO);
 
         execv(path, background_process);
+        dup2(original_stdout, STDOUT_FILENO);
+        printf("ERROR!");
     }
 }
 
-static void execute_process_foreground(char **foreground_process)
+static void execute_process_foreground(char **foreground_process, pid_t group_id, int *is_foreground_active)
 {
     char path[2000];
 
@@ -241,14 +250,26 @@ static void execute_process_foreground(char **foreground_process)
 
     if (pid == 0)
     {
+        setpgid(0, group_id);
         execv(path, foreground_process);
 
-        printf(RED "ERROR ON FOREGROUND EXECUTION!\n" RESET);
+        printf(RED "Error on foreground execution: could not execute the command!\n" RESET);
         exit(1);
     }
 
+    sleep(0.6);
+
+    *is_foreground_active = 1;
+
     int status;
     waitpid(pid, &status, 0);
+
+    if (WIFSIGNALED(status))
+    {
+        killpg(group_id, WTERMSIG(status));
+    }
+
+    *is_foreground_active = 0;
 }
 
 void signal_handler()
