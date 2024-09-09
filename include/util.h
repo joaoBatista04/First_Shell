@@ -3,6 +3,11 @@
 
 #define MAX_BACKGROUND_GROUPS 1000
 
+#define GREEN "\033[1;32m"
+#define PURPLE "\033[35m"
+#define RESET "\033[0m"
+#define RED "\033[0;31m"
+
 void shell_print_name(char first);
 char ***shell_read_commands(char first, int *commands_amount);
 void free_commands(char ***commands);

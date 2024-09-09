@@ -8,11 +8,6 @@
 #include <fcntl.h>
 #include "../include/util.h"
 
-#define GREEN "\033[1;32m"
-#define PURPLE "\033[35m"
-#define RESET "\033[0m"
-#define RED "\033[0;31m"
-
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
 
@@ -160,6 +155,18 @@ pid_t execute_process_background(char ***background_process, int commands_amount
 
     else if (session_leader == 0)
     {
+        struct sigaction act;
+
+        if (sigaction(SIGINT, NULL, &act) == -1) /* Find current SIGINT handler*/
+            perror("Failed to get old handler for SIGINT");
+        else if (act.sa_handler != SIG_IGN)
+        { /*Ifcurrent SIGINT handler is default*/
+            printf("PID IS %d\n", getpid());
+            act.sa_handler = SIG_IGN; /* Set new SIGINT handler to “ignore */
+            if (sigaction(SIGINT, &act, NULL) == -1)
+                perror("Failed to ignore SIGINT");
+        }
+
         setpgid(0, getpid());
 
         if (commands_amount == 2)
