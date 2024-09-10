@@ -19,4 +19,7 @@ static void exec_process_aux(char **background_process);
 
 void signal_prevent();
 
+void waitall(pid_t *background_processes, int *background_processes_amount);
+void die(pid_t *background_processes, int *background_processes_amount);
+
 #endif

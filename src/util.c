@@ -122,12 +122,14 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
 {
     if (!strcmp("die", commands[0][0]))
     {
-        for (int i = 0; i < *background_processes_amount; i++)
-        {
-            killpg(background_processes[i], SIGKILL);
-        }
+        die(background_processes, background_processes_amount);
 
         exit = 0;
+    }
+
+    else if (!strcmp("waitall", commands[0][0]))
+    {
+        waitall(background_processes, background_processes_amount);
     }
 
     else
@@ -254,7 +256,6 @@ static void execute_process_foreground(char **foreground_process, pid_t group_id
         setpgid(0, group_id);
         signal_prevent();
 
-        printf("%s\n", path);
         execv(path, foreground_process);
 
         printf(RED "Error on foreground execution: could not execute the command!\n" RESET);
@@ -300,5 +301,26 @@ void signal_prevent()
         {
             perror(RED "Failed to ignore SIGINT" RESET);
         }
+    }
+}
+
+void waitall(pid_t *background_processes, int *background_processes_amount)
+{
+    for (int i = 0; i < *background_processes_amount; i++)
+    {
+        pid_t group_id = background_processes[i];
+
+        if (group_id != 0)
+        {
+            pid_t pid = waitpid(background_processes[i], NULL, WNOHANG);
+        }
+    }
+}
+
+void die(pid_t *background_processes, int *background_processes_amount)
+{
+    for (int i = 0; i < *background_processes_amount; i++)
+    {
+        killpg(background_processes[i], SIGKILL);
     }
 }
