@@ -125,11 +125,13 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
         die(background_processes, background_processes_amount);
 
         exit = 0;
+        return exit;
     }
 
     else if (!strcmp("waitall", commands[0][0]))
     {
         waitall(background_processes, background_processes_amount);
+        return exit;
     }
 
     else
@@ -301,6 +303,16 @@ void signal_prevent()
         {
             perror(RED "Failed to ignore SIGINT" RESET);
         }
+
+        if (sigaction(SIGQUIT, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGQUIT" RESET);
+        }
+
+        if (sigaction(SIGTSTP, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGQUIT" RESET);
+        }
     }
 }
 
@@ -315,6 +327,8 @@ void waitall(pid_t *background_processes, int *background_processes_amount)
             pid_t pid = waitpid(background_processes[i], NULL, WNOHANG);
         }
     }
+
+    return;
 }
 
 void die(pid_t *background_processes, int *background_processes_amount)
@@ -323,4 +337,6 @@ void die(pid_t *background_processes, int *background_processes_amount)
     {
         killpg(background_processes[i], SIGKILL);
     }
+
+    return;
 }

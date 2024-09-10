@@ -1,10 +1,11 @@
 nao abortar shell se houverem mais de 5 comandos
-Tirar alocação de memoria de comandos e usar variáveis globais
-Dar suporte para leitura de comandos sem -
+Tirar alocação de memoria de comandos e usar variáveis globais -> TALVEZ NÃO NECESSÁRIO
+Dar suporte para leitura de comandos sem - -> RESOLVIDO
+Exibir mensagem na tela caso o waitall ou o die sejam solicitados junto com outros comandos na mesma linha.
 
 _____________________________________________________________________________
 
-- faltando fork nos processos em background?
-- resolver comandos que possuem espaço (ps aux...)
+- faltando fork nos processos em background? -> RESOLVIDO
+- resolver comandos que possuem espaço (ps aux...) -> RESOLVIDO
 - passagem do token por strdup melhorou os erros, mas falta 1 free misterioso
-- variáveis globais??
+- variáveis globais?? -> Não tem problema (RESOLVIDO)
