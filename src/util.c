@@ -37,10 +37,16 @@ char ***shell_read_commands(char first, int *commands_amount)
         commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
 
     if (first == 'y')
+    {
         scanf("%[^\n]", line);
+    }
 
     else
+    {
+        // fread(line, 1, sizeof(char), stdin);
+        // printf("LINE: %s", line);
         scanf("%*c%[^\n]", line);
+    }
 
     char *commands_aux[MAX_PROCESS_AMOUNT];
     char *command = strtok(line, "#");
@@ -126,24 +132,22 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
 
     else
     {
-        int is_foreground_active;
-
         if (commands_amount == 1)
         {
-            execute_process_foreground(commands[0], 0, &is_foreground_active);
+            execute_process_foreground(commands[0], 0, background_processes, background_processes_amount);
         }
 
         else
         {
-            pid_t pid_group = execute_process_background(commands, commands_amount, background_processes, background_processes_amount, &is_foreground_active);
-            execute_process_foreground(commands[0], pid_group, &is_foreground_active);
+            pid_t pid_group = execute_process_background(commands, commands_amount, background_processes, background_processes_amount);
+            execute_process_foreground(commands[0], pid_group, background_processes, background_processes_amount);
         }
     }
 
     return exit;
 }
 
-pid_t execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount, int *is_foreground_active)
+pid_t execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount)
 {
     pid_t session_leader = fork();
 
@@ -155,17 +159,7 @@ pid_t execute_process_background(char ***background_process, int commands_amount
 
     else if (session_leader == 0)
     {
-        struct sigaction act;
-
-        if (sigaction(SIGINT, NULL, &act) == -1) /* Find current SIGINT handler*/
-            perror("Failed to get old handler for SIGINT");
-        else if (act.sa_handler != SIG_IGN)
-        { /*Ifcurrent SIGINT handler is default*/
-            printf("PID IS %d\n", getpid());
-            act.sa_handler = SIG_IGN; /* Set new SIGINT handler to “ignore */
-            if (sigaction(SIGINT, &act, NULL) == -1)
-                perror("Failed to ignore SIGINT");
-        }
+        signal_prevent();
 
         setpgid(0, getpid());
 
@@ -203,7 +197,6 @@ pid_t execute_process_background(char ***background_process, int commands_amount
 
             if (WIFSIGNALED(status))
             {
-                printf("FILHO MORREU COM SINAL %d\n", WTERMSIG(status));
                 killpg(session_leader, WTERMSIG(status));
             }
         }
@@ -244,11 +237,11 @@ static void exec_process_aux(char **background_process)
 
         execv(path, background_process);
         dup2(original_stdout, STDOUT_FILENO);
-        printf("ERROR!");
+        printf(RED "Error on background execution!\n");
     }
 }
 
-static void execute_process_foreground(char **foreground_process, pid_t group_id, int *is_foreground_active)
+static void execute_process_foreground(char **foreground_process, pid_t group_id, __pid_t *background_processes_ids, int *background_processes_amount)
 {
     char path[2000];
 
@@ -257,7 +250,11 @@ static void execute_process_foreground(char **foreground_process, pid_t group_id
 
     if (pid == 0)
     {
+        // REMOVER PARA EXECUTAR COMANDOS COMO HTOP E TOP
         setpgid(0, group_id);
+        signal_prevent();
+
+        printf("%s\n", path);
         execv(path, foreground_process);
 
         printf(RED "Error on foreground execution: could not execute the command!\n" RESET);
@@ -266,19 +263,42 @@ static void execute_process_foreground(char **foreground_process, pid_t group_id
 
     sleep(0.6);
 
-    *is_foreground_active = 1;
+    if (group_id == 0)
+    {
+        background_processes_ids[*background_processes_amount] = pid;
+        (*background_processes_amount)++;
+    }
 
     int status;
-    waitpid(pid, &status, 0);
+    pid_t test = waitpid(pid, &status, 0);
 
     if (WIFSIGNALED(status))
     {
         killpg(group_id, WTERMSIG(status));
     }
 
-    *is_foreground_active = 0;
+    if (group_id == 0)
+    {
+        background_processes_ids[(*background_processes_amount) - 1] = 0;
+        (*background_processes_amount)--;
+    }
 }
 
-void signal_handler()
+void signal_prevent()
 {
+    struct sigaction act;
+
+    if (sigaction(SIGINT, NULL, &act) == -1)
+    {
+        perror(RED "Failed to get old handler for SIGINT" RESET);
+    }
+
+    else if (act.sa_handler != SIG_IGN)
+    {
+        act.sa_handler = SIG_IGN; /* Set new SIGINT handler to “ignore */
+        if (sigaction(SIGINT, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGINT" RESET);
+        }
+    }
 }
