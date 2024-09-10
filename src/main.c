@@ -15,6 +15,10 @@ void signal_handler(int sig)
 {
     if (sig == SIGINT)
     {
+        sigset_t mask;
+        sigfillset(&mask);
+        sigprocmask(SIG_SETMASK, &mask, NULL);
+
         int flag = 0;
 
         for (int i = 0; i < background_groups_amount; i++)
