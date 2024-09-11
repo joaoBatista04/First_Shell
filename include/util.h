@@ -60,7 +60,30 @@ void die(pid_t *background_processes, int *background_processes_amount);
  */
 void waitall(pid_t *background_processes, int *background_processes_amount);
 
+/**
+ * @brief Verifies if any of the provided commands is "htop" or "top".
+ *
+ * @param commands A pointer to an array of command arrays (strings), where each 
+ *                 command is represented as an array of strings (char pointers). 
+ *                 `commands[i][0]` holds the main command for the i-th entry.
+ * 
+ * @param commands_amount The total number of commands to check.
+ * 
+ * @returns Returns 1 if "htop" or "top" is found among the commands, otherwise returns 0.
+ */
 int verify_if_top(char ***commands, int commands_amount);
+
+/**
+ * @brief Verifies if any of the provided commands is "die" or "waitall".
+ *
+ * @param commands A pointer to an array of command arrays (strings), where each 
+ *                 command is represented as an array of strings (char pointers). 
+ *                 `commands[i][0]` holds the main command for the i-th entry.
+ * 
+ * @param commands_amount The total number of commands to check.
+ * 
+ * @returns Returns 1 if "die" or "waitall" is found among the commands, otherwise returns 0.
+ */
 int verify_if_die_or_waitall(char ***commands, int commands_amount);
 
 /**
@@ -84,7 +107,9 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
  * @param background_process_ids The background processes id's.
  * @param background_processes_amount The number of background processes to be executed.
  *
- * @returns
+ * @returns The process ID (PID) of the session leader if the process is successfully forked. 
+ *          Returns -1 if an error occurs during the forking process.
+ * 
  */
 pid_t execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount);
 

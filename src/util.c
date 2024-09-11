@@ -135,25 +135,25 @@ char ***shell_read_commands(char first, int *commands_amount)
             abort();
         }
 
-        // Remove espaços extras no começo do comando
+        // Removes extra spaces at the beginning of the command
         while (*command == ' ')
             command++;
 
         commands_aux[count_proc] = strdup(command);
 
-        // Avançar para o próximo comando separado por '#'
+        // Move to the next command separated by '#'
         command = strtok(NULL, "#");
         count_proc++;
     }
 
     for (int i = 0; i < count_proc; i++)
     {
-        // Agora separamos os parâmetros com ' '
+        // Now we separate the parameters with ' '
         char *dup = strdup(commands_aux[i]);
         char *parameter = strtok(dup, " ");
         free(commands_aux[i]);
 
-        // O primeiro parametro é o comando principal, armazenamos ele na primeira posição
+        // The first parameter is the main command, we store it in the first position
         if (parameter != NULL)
         {
             commands[i][0] = strdup(parameter);
@@ -161,7 +161,7 @@ char ***shell_read_commands(char first, int *commands_amount)
 
         int count_param = 1;
 
-        // Pegamos os parâmetros com ' '
+        // We retrieve the parameters using ' '
         parameter = strtok(NULL, " ");
 
         while (parameter != NULL)

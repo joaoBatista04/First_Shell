@@ -54,19 +54,19 @@ void signal_handler(int sig)
             fflush(stdout);
             fflush(stdin);
             char op = 'u';
-            getchar(); // Limpa o buffer de entrada
+            getchar(); // Cleans input buffer
             scanf("%c", &op);
 
             if (op == 'y')
             {
                 printf(GREEN "\nOk, cleaning all processes..." PURPLE "\nDone, exiting... Bye!\n" RESET);
-                fflush(stdout); // Garante que a mensagem seja impressa
+                fflush(stdout); // Guarantees that the message gets printed
 
                 for (int i = 0; i < background_groups_amount; i++)
                 {
                     if (background_groups_id[i] > 0)
                     {
-                        killpg(background_groups_id[i], SIGKILL); // Mata o grupo de processos
+                        killpg(background_groups_id[i], SIGKILL); // Kills process group
                     }
                 }
 
