@@ -11,6 +11,11 @@
 __pid_t background_groups_id[MAX_BACKGROUND_GROUPS];
 int background_groups_amount = 0;
 
+/**
+ * @brief Treats possible signals (SIGTSTP or SIGINT).
+ *
+ * @param sig The signal received by the shell.
+ */
 void signal_handler(int sig)
 {
     if (sig == SIGINT)

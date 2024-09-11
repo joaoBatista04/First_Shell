@@ -11,11 +11,35 @@
 #define MAX_PROCESS_AMOUNT 5
 #define MAX_PARAMS_AMOUNT 2
 
-/**
- * @brief Always executed to print the shell info
- *
- * @param first
- */
+void signal_prevent()
+{
+    struct sigaction act;
+
+    if (sigaction(SIGINT, NULL, &act) == -1)
+    {
+        perror(RED "Failed to get old handler for SIGINT" RESET);
+    }
+
+    else if (act.sa_handler != SIG_IGN)
+    {
+        act.sa_handler = SIG_IGN; /* Set new SIGINT handler to “ignore */
+        if (sigaction(SIGINT, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGINT" RESET);
+        }
+
+        if (sigaction(SIGQUIT, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGQUIT" RESET);
+        }
+
+        if (sigaction(SIGTSTP, &act, NULL) == -1)
+        {
+            perror(RED "Failed to ignore SIGQUIT" RESET);
+        }
+    }
+}
+
 void shell_print_name(char first)
 {
     // If shell execution is first, terminal is cleared
@@ -26,6 +50,43 @@ void shell_print_name(char first)
 
     // Print buffer info
     printf(GREEN "fsh" PURPLE "> " RESET);
+}
+
+void free_commands(char ***commands)
+{
+    for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+    {
+        free(commands[i]);
+    }
+    free(commands);
+}
+
+static void exec_process_aux(char **background_process)
+{
+    pid_t child = fork();
+
+    if (child < 0)
+    {
+        printf(RED "Error on background process creation!\n" RESET);
+    }
+
+    else if (child == 0)
+    {
+        char path[2000];
+
+        sprintf(path, "/bin/%s", background_process[0]);
+
+        __pid_t consciouness = fork();
+
+        int devnull = open("/dev/null", O_RDWR);
+        int original_stdout = dup(STDOUT_FILENO);
+        dup2(devnull, STDIN_FILENO);
+        dup2(devnull, STDOUT_FILENO);
+
+        execv(path, background_process);
+        dup2(original_stdout, STDOUT_FILENO);
+        printf(RED "Error on background execution!\n");
+    }
 }
 
 char ***shell_read_commands(char first, int *commands_amount)
@@ -109,13 +170,29 @@ char ***shell_read_commands(char first, int *commands_amount)
     return commands;
 }
 
-void free_commands(char ***commands)
+void die(pid_t *background_processes, int *background_processes_amount)
 {
-    for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+    for (int i = 0; i < *background_processes_amount; i++)
     {
-        free(commands[i]);
+        killpg(background_processes[i], SIGKILL);
     }
-    free(commands);
+
+    return;
+}
+
+void waitall(pid_t *background_processes, int *background_processes_amount)
+{
+    for (int i = 0; i < *background_processes_amount; i++)
+    {
+        pid_t group_id = background_processes[i];
+
+        if (group_id != 0)
+        {
+            pid_t pid = waitpid(background_processes[i], NULL, WNOHANG);
+        }
+    }
+
+    return;
 }
 
 int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit)
@@ -217,34 +294,6 @@ pid_t execute_process_background(char ***background_process, int commands_amount
     return session_leader;
 }
 
-static void exec_process_aux(char **background_process)
-{
-    pid_t child = fork();
-
-    if (child < 0)
-    {
-        printf(RED "Error on background process creation!\n" RESET);
-    }
-
-    else if (child == 0)
-    {
-        char path[2000];
-
-        sprintf(path, "/bin/%s", background_process[0]);
-
-        __pid_t consciouness = fork();
-
-        int devnull = open("/dev/null", O_RDWR);
-        int original_stdout = dup(STDOUT_FILENO);
-        dup2(devnull, STDIN_FILENO);
-        dup2(devnull, STDOUT_FILENO);
-
-        execv(path, background_process);
-        dup2(original_stdout, STDOUT_FILENO);
-        printf(RED "Error on background execution!\n");
-    }
-}
-
 static void execute_process_foreground(char **foreground_process, pid_t group_id, __pid_t *background_processes_ids, int *background_processes_amount)
 {
     char path[2000];
@@ -285,58 +334,4 @@ static void execute_process_foreground(char **foreground_process, pid_t group_id
         background_processes_ids[(*background_processes_amount) - 1] = 0;
         (*background_processes_amount)--;
     }
-}
-
-void signal_prevent()
-{
-    struct sigaction act;
-
-    if (sigaction(SIGINT, NULL, &act) == -1)
-    {
-        perror(RED "Failed to get old handler for SIGINT" RESET);
-    }
-
-    else if (act.sa_handler != SIG_IGN)
-    {
-        act.sa_handler = SIG_IGN; /* Set new SIGINT handler to “ignore */
-        if (sigaction(SIGINT, &act, NULL) == -1)
-        {
-            perror(RED "Failed to ignore SIGINT" RESET);
-        }
-
-        if (sigaction(SIGQUIT, &act, NULL) == -1)
-        {
-            perror(RED "Failed to ignore SIGQUIT" RESET);
-        }
-
-        if (sigaction(SIGTSTP, &act, NULL) == -1)
-        {
-            perror(RED "Failed to ignore SIGQUIT" RESET);
-        }
-    }
-}
-
-void waitall(pid_t *background_processes, int *background_processes_amount)
-{
-    for (int i = 0; i < *background_processes_amount; i++)
-    {
-        pid_t group_id = background_processes[i];
-
-        if (group_id != 0)
-        {
-            pid_t pid = waitpid(background_processes[i], NULL, WNOHANG);
-        }
-    }
-
-    return;
-}
-
-void die(pid_t *background_processes, int *background_processes_amount)
-{
-    for (int i = 0; i < *background_processes_amount; i++)
-    {
-        killpg(background_processes[i], SIGKILL);
-    }
-
-    return;
 }
