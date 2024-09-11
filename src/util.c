@@ -56,6 +56,13 @@ void free_commands(char ***commands)
 {
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
     {
+        for (int j = 0; j < MAX_PARAMS_AMOUNT + 1; j++)
+        {
+            if (commands[i][j] != NULL)
+            {
+                free(commands[i][j]);
+            }
+        }
         free(commands[i]);
     }
     free(commands);
@@ -95,7 +102,14 @@ char ***shell_read_commands(char first, int *commands_amount)
     char ***commands = (char ***)malloc(MAX_PROCESS_AMOUNT * sizeof(char **));
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
+    {
         commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
+
+        for (int j = 0; j < MAX_PARAMS_AMOUNT + 1; j++)
+        {
+            commands[i][j] = NULL;
+        }
+    }
 
     if (first == 'y')
     {
@@ -104,8 +118,6 @@ char ***shell_read_commands(char first, int *commands_amount)
 
     else
     {
-        // fread(line, 1, sizeof(char), stdin);
-        // printf("LINE: %s", line);
         scanf("%*c%[^\n]", line);
     }
 
@@ -127,7 +139,6 @@ char ***shell_read_commands(char first, int *commands_amount)
         while (*command == ' ')
             command++;
 
-        // printf("Comando: %s\n", command);
         commands_aux[count_proc] = strdup(command);
 
         // Avançar para o próximo comando separado por '#'
@@ -140,6 +151,7 @@ char ***shell_read_commands(char first, int *commands_amount)
         // Agora separamos os parâmetros com ' '
         char *dup = strdup(commands_aux[i]);
         char *parameter = strtok(dup, " ");
+        free(commands_aux[i]);
 
         // O primeiro parametro é o comando principal, armazenamos ele na primeira posição
         if (parameter != NULL)
@@ -158,11 +170,15 @@ char ***shell_read_commands(char first, int *commands_amount)
                 printf(RED "Error: You can't type more than two parameters for each command!\nParameter " PURPLE "%s " RED "from command " PURPLE "%s " RED "will be desconsidered!\n" RESET, parameter, commands[i][0]);
 
             else
+            {
                 commands[i][count_param] = strdup(parameter);
+            }
 
             parameter = strtok(NULL, " ");
             count_param++;
         }
+
+        free(dup);
     }
 
     *commands_amount = count_proc;

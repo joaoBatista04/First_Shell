@@ -53,11 +53,11 @@ void signal_handler(int sig)
             printf(RED "\nThere are still processes spawned by this shell running.\nAre you sure you want to perform this operation? [yy/nn] " RESET);
             fflush(stdout);
             fflush(stdin);
-            char op[2] = "uu";
+            char op = 'u';
             getchar(); // Limpa o buffer de entrada (sem isso tava dando errado n sei pq)
-            scanf("%[^\n]", op);
+            scanf("%c", &op);
 
-            if (op[0] == 'y')
+            if (op == 'y')
             {
                 printf(GREEN "\nOk, cleaning all processes..." PURPLE "\nDone, exiting... Bye!\n" RESET);
                 fflush(stdout); // Garante que a mensagem seja impressa
