@@ -211,6 +211,26 @@ void waitall(pid_t *background_processes, int *background_processes_amount)
     return;
 }
 
+int verify_if_top(char ***commands, int commands_amount)
+{
+    if (commands_amount > 1)
+    {
+        int flag = 0;
+
+        for (int i = 0; i < commands_amount; i++)
+        {
+            if (!strcmp(commands[i][0], "htop") || !strcmp(commands[i][0], "top"))
+            {
+                flag = 1;
+            }
+        }
+
+        return flag;
+    }
+
+    return 0;
+}
+
 int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit)
 {
     if (!strcmp("die", commands[0][0]))
@@ -218,6 +238,12 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
         die(background_processes, background_processes_amount);
 
         exit = 0;
+        return exit;
+    }
+
+    if (verify_if_top(commands, commands_amount))
+    {
+        printf(PURPLE "HTOP " RED "or" PURPLE " TOP " RED "must be called exclusively alone in the command line!\nThis line will be desconsidered!\n" RESET);
         return exit;
     }
 
@@ -319,8 +345,11 @@ static void execute_process_foreground(char **foreground_process, pid_t group_id
 
     if (pid == 0)
     {
-        // REMOVER PARA EXECUTAR COMANDOS COMO HTOP E TOP
-        setpgid(0, group_id);
+        if (strcmp(foreground_process[0], "htop") && strcmp(foreground_process[0], "top"))
+        {
+            setpgid(0, group_id);
+        }
+
         signal_prevent();
 
         execv(path, foreground_process);

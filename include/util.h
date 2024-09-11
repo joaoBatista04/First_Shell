@@ -39,7 +39,7 @@ static void exec_process_aux(char **background_process);
  *
  * @param first A flag that indicates if it's the first time this function is executed.
  * @param commands_amount The amount of commands written.
- * 
+ *
  * @returns The vector that storages the shell commands.
  */
 char ***shell_read_commands(char first, int *commands_amount);
@@ -60,6 +60,8 @@ void die(pid_t *background_processes, int *background_processes_amount);
  */
 void waitall(pid_t *background_processes, int *background_processes_amount);
 
+int verify_if_top(char ***commands, int commands_amount);
+
 /**
  * @brief Executes the commands entered by the user.
  *
@@ -68,7 +70,7 @@ void waitall(pid_t *background_processes, int *background_processes_amount);
  * @param background_processes The background processes pid's vector.
  * @param background_processes_amount The number of zombie descendants processes.
  * @param exit A flag that indicates if shell operation should continue or not.
- * 
+ *
  * @returns A flag that indicates if shell operation should continue or not.
  */
 int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit);
@@ -80,8 +82,8 @@ int execute_processes(char ***commands, int commands_amount, __pid_t *background
  * @param commands_amount The amount of commands to be executed in background.
  * @param background_process_ids The background processes id's.
  * @param background_processes_amount The number of background processes to be executed.
- * 
- * @returns 
+ *
+ * @returns
  */
 pid_t execute_process_background(char ***background_process, int commands_amount, __pid_t *background_process_ids, int *background_processes_amount);
 

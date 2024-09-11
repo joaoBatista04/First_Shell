@@ -70,7 +70,7 @@ void signal_handler(int sig)
                     }
                 }
 
-                raise(SIGKILL);
+                exit(0);
             }
 
             else
