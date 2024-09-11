@@ -99,11 +99,11 @@ static void exec_process_aux(char **background_process)
 char ***shell_read_commands(char first, int *commands_amount)
 {
     char line[2000];
-    char ***commands = (char ***)malloc(MAX_PROCESS_AMOUNT * sizeof(char **));
+    char ***commands = (char ***)calloc(MAX_PROCESS_AMOUNT, sizeof(char **));
 
     for (int i = 0; i < MAX_PROCESS_AMOUNT; i++)
     {
-        commands[i] = (char **)malloc((MAX_PARAMS_AMOUNT + 1) * sizeof(char *));
+        commands[i] = (char **)calloc((MAX_PARAMS_AMOUNT + 1), sizeof(char *));
 
         for (int j = 0; j < MAX_PARAMS_AMOUNT + 1; j++)
         {
@@ -340,7 +340,7 @@ pid_t execute_process_background(char ***background_process, int commands_amount
             exec_process_aux(background_process[4]);
         }
 
-        pid_t pid;
+        pid_t pid = 0;
         int status;
         while (pid != -1)
         {

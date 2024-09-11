@@ -45,7 +45,7 @@ void signal_handler(int sig)
         {
             printf(RED "\nNo leftover processes running, exiting...\n" RESET);
             fflush(stdout);
-            raise(SIGKILL);
+            exit(0);
         }
 
         else
