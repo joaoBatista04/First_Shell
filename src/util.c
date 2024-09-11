@@ -193,6 +193,8 @@ void die(pid_t *background_processes, int *background_processes_amount)
         killpg(background_processes[i], SIGKILL);
     }
 
+    printf(GREEN "Ok, cleaning all processes..." PURPLE "\nDone, exiting... Bye!\n" RESET);
+
     return;
 }
 
