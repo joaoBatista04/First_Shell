@@ -233,19 +233,45 @@ int verify_if_top(char ***commands, int commands_amount)
     return 0;
 }
 
+int verify_if_die_or_waitall(char ***commands, int commands_amount)
+{
+    if (commands_amount > 1)
+    {
+        int flag = 0;
+
+        for (int i = 0; i < commands_amount; i++)
+        {
+            if (!strcmp(commands[i][0], "die") || !strcmp(commands[i][0], "waitall"))
+            {
+                flag = 1;
+            }
+        }
+
+        return flag;
+    }
+
+    return 0;
+}
+
 int execute_processes(char ***commands, int commands_amount, __pid_t *background_processes, int *background_processes_amount, int exit)
 {
+    if (verify_if_top(commands, commands_amount))
+    {
+        printf(PURPLE "HTOP " RED "or" PURPLE " TOP " RED "must be called exclusively alone in the command line!\nThis line will be desconsidered!\n" RESET);
+        return exit;
+    }
+
+    if (verify_if_die_or_waitall(commands, commands_amount))
+    {
+        printf(PURPLE "DIE " RED "or" PURPLE " WAITALL " RED "must be called exclusively alone in the command line!\nThis line will be desconsidered!\n" RESET);
+        return exit;
+    }
+
     if (!strcmp("die", commands[0][0]))
     {
         die(background_processes, background_processes_amount);
 
         exit = 0;
-        return exit;
-    }
-
-    if (verify_if_top(commands, commands_amount))
-    {
-        printf(PURPLE "HTOP " RED "or" PURPLE " TOP " RED "must be called exclusively alone in the command line!\nThis line will be desconsidered!\n" RESET);
         return exit;
     }
 

@@ -61,6 +61,7 @@ void die(pid_t *background_processes, int *background_processes_amount);
 void waitall(pid_t *background_processes, int *background_processes_amount);
 
 int verify_if_top(char ***commands, int commands_amount);
+int verify_if_die_or_waitall(char ***commands, int commands_amount);
 
 /**
  * @brief Executes the commands entered by the user.
