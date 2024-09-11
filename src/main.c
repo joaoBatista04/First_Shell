@@ -54,7 +54,7 @@ void signal_handler(int sig)
             fflush(stdout);
             fflush(stdin);
             char op = 'u';
-            getchar(); // Limpa o buffer de entrada (sem isso tava dando errado n sei pq)
+            getchar(); // Limpa o buffer de entrada
             scanf("%c", &op);
 
             if (op == 'y')
