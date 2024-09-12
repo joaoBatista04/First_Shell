@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include "../include/util.h"
 
+// Global variables: the background processes ids and the amount of background processes registered
 __pid_t background_groups_id[MAX_BACKGROUND_GROUPS];
 int background_groups_amount = 0;
 
